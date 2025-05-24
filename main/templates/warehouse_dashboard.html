@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Smoothly expand fields on hover */
+    input.form-control {
+        transition: all 0.3s ease;
+        min-width: 100px;
+    }
+
+    input.form-control:hover,
+    input.form-control:focus {
+        transform: scale(1.05);
+        z-index: 10;
+    }
+
+    td {
+        vertical-align: middle;
+    }
+
+    /* Make sure the table uses full width and wraps nicely */
+    #agentWorkTable {
+        table-layout: auto;
+        width: 100%;
+        overflow-wrap: break-word;  /* updated */
+    }
+
+    th, td {
+        padding: 12px !important;
+    }
+
+    .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    }
+
+    #agentWorkTable {
+    min-width: 1200px; /* Adjust based on how wide your fields are */
+    table-layout: auto;
+    }
+
+    #agentWorkTable {
+    min-width: 1200px; /* Force table to grow wider */
+    table-layout: auto;
+    }
+
+    #agentWorkTable select {
+    min-width: 140px;
+    }
+
+    #agentWorkTable thead th {
+    position: sticky;
+    top: 0;
+    background-color: #212529; /* dark header background */
+    color: white;
+    z-index: 2;
+    }
+
+
+</style>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Welcome {{ name }} | Agent Workspace</h2>
+    <form method="POST">
+        <div class="table-responsive" style="max-height: 400px; overflow: auto;">
+            <table class="table table-bordered table-responsive" id="agentWorkTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Emp</th>
+                        <th>Serial Number</th>
+                        <th>Device</th>
+                        <th>Client</th>
+                        <th>Batch Number</th>
+                        <th>SLA Deadline</th>
+                        <th>Device Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td><input type="number" name="emp_id[]" class="form-control" required></td>
+                        <td><input type="text" name="serial_number[]" class="form-control serial-field" required></td>
+                        <td><input type="text" name="device_id[]" class="form-control device-name" required></td>
+                        <td><input type="text" name="client_id[]" class="form-control client-name" required></td>
+                        <td><input type="text" name="batch_number[]" class="form-control" required></td>
+                        <td><input type="datetime-local" name="sla_deadline[]" class="form-control" required></td>
+                        <td>
+                          <select name="device_status[]" class="form-control" required>
+                            <option value="Received">Received</option>
+                            <option value="In Query">In Query</option>
+                          </select>
+                        </td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this)">Delete</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" onclick="addRow()">Add Row</button>
+            <button type="submit" class="btn btn-success">Submit Records</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function addRow() {
+        const tableBody = document.getElementById("tableBody");
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+            <td><input type="number" name="emp_id[]" class="form-control" required></td>
+            <td><input type="text" name="serial_number[]" class="form-control serial-field" required></td>
+            <td><input type="text" name="device_id[]" class="form-control device-name" required></td>
+            <td><input type="text" name="client_id[]" class="form-control client-name" required></td>
+            <td><input type="text" name="batch_number[]" class="form-control" required></td>
+            <td><input type="datetime-local" name="sla_deadline[]" class="form-control" required></td>
+            <td>
+              <select name="device_status[]" class="form-control" required>
+                <option value="Received">Received</option>
+                <option value="In Query">In Query</option>
+              </select>
+            </td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this)">Delete</button></td>
+        `;
+        tableBody.appendChild(newRow);
+    }
+
+    function deleteRow(button) {
+        const row = button.closest("tr");
+        row.remove();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("agentWorkTable").addEventListener("input", async function (e) {
+            if (e.target && e.target.classList.contains("serial-field")) {
+                const serialInput = e.target;
+                const serial = serialInput.value.trim();
+                if (!serial) return;
+
+                try {
+                    const response = await fetch(`/get-info-by-serial/${encodeURIComponent(serial)}`);
+                    if (!response.ok) throw new Error("Failed to fetch");
+
+                    const data = await response.json();
+                    const row = serialInput.closest("tr");
+
+                    const deviceInput = row.querySelector('input[name="device_id[]"]');
+                    const clientInput = row.querySelector('input[name="client_id[]"]');
+
+                    if (deviceInput) deviceInput.value = data.device ?? "";
+                    if (clientInput) clientInput.value = data.client ?? "";
+                } catch (err) {
+                    console.error("Error fetching data:", err);
+                    alert("Could not fetch device information.");
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

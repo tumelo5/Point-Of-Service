@@ -1,0 +1,14 @@
+part_name,part_number,faults
+keypad,3000-KPD-001,keypad drawn/faded
+window plate,3000-WPL-002,window plate broken/faded
+upper casing,3000-UCA-003,upper casing broken/scratched
+lower casing,3000-LCA-004,lower casing broken/scratched
+battery door,3000-BTD-005,battery door broken/scratched
+battery,3000-BAT-006,battery wires damaged/unable to hold power
+printer,3000-PRN-007,printer broken/rpints blanks
+paper flap,3000-PFL-008,paper flap broken/faded
+printer lid,3000-PRL-009,printer lid broken/faded
+usb port(b-type),3000-USB-010,usb port(b-type) broken
+pin charger,3000-PCH-011,pin charger broken
+cmos,3000-CMO-012,cmos volatge
+lcd,3000-LCD-013,LCD damaged

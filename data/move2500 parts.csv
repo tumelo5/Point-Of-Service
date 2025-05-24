@@ -1,0 +1,14 @@
+part_name,part_number,faults
+keypad,2500-KPD-001,keypad drawn on/faded
+window plate,2500-WPL-002,window plate broken/faded/scratched
+upper casing,2500-UCA-003,upper casing broken/scratched
+lower casing,2500-LCA-004,lower casing broken/scratched
+battery door,2500-BTD-005,battery door broken/scratched
+battery,2500-BAT-006,battery wires damaged/unabe to hold power
+printer,2500-PRN-007,printer broken/prints blankk
+paper flap,2500-PFL-008,paper flap broken/faded/scratched
+printer lid,2500-PRL-009,printer lid broken/faded/scratched
+usb port(b-type),2500-USB-010,usb port(b-type) broken
+pin charger,2500-PCH-011,pin charger broken
+cmos,2500-CMO-012,cmos voltage low
+lcd,2500-LCD-013,LCD damaged

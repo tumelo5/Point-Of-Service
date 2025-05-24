@@ -1,130 +1,211 @@
-from sqlalchemy.orm import Session
-from models import Company_Employee_Info
+import os
+import logging
+import pandas as pd
+from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.orm import sessionmaker
+from my_project.models import employees_model, client_model
+from my_project.models.client_model import POSDevice, POSModel, Client
+from my_project.database.database import engine, SessionLocal
 
-# List of employee data to be inserted
-employees_data = [
-    {"full_name": "John Doe", "department": "Finance", "job_title": "-----------"},
-    {"full_name": "Jane Smith", "department": "Finance", "job_title": "_________"},
-    {"full_name": "Alice Johnson", "department": "Finance", "job_title": "-------"},
+# Configure logging with INFO level and timestamp
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-    {"full_name": "Bob Brown", "department": "Quality_Control", "job_title": "QC Agent"},
-    {"full_name": "David Jones", "department": "Quality_Control", "job_title": "QC Agent"},
-    {"full_name": "Jones Jones", "department": "Quality_Control", "job_title": "QC Agent"},
-    {"full_name": "David Bell", "department": "Quality_Control", "job_title": "QC Agent"},
-    {"full_name": "Ethan Reynolds", "department": "Quality_Control", "job_title": "QC Agent"},
+# Get base directory of the current script for relative CSV file paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    {"full_name": "Ethan Reynolds", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Olivia Carter", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Liam Mitchell", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Sophia Bennett", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Noah Harrison", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Ava Collins", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Mason Brooks", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Isabella Cooper", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Elijah Scott", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Charlotte Hayes", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "James Foster", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Amelia Richardson", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Benjamin Simmons", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Harper Edwards", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Alexander Jenkins", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Emily Griffin", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Daniel Walker", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Abigail Wright", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Henry Murphy", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Madison Price", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Samuel Russell", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Ella Rogers", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Matthew Torres", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Scarlett Peterson", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "David Powell", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Victoria Barnes", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Joseph Rivera", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Grace Patterson", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Andrew Jenkins", "department": "Repairs", "job_title": "Technician"},
-    {"full_name": "Chloe Sanders", "department": "Repairs", "job_title": "Technician"},
+# List of tuples containing (CSV file path, ORM model, unique ID field, optional unique field)
+csv_model_pairs = [
+    # Uncomment and add more if needed
+    # (os.path.join(BASE_DIR, "data", "employees.csv"), employees_model.CompanyEmployeeInfo, "emp_id", "emp_name"),
+    (os.path.join(BASE_DIR, "data", "clients.csv"), client_model.Client, "client_id", None),
+    # (os.path.join(BASE_DIR, "data", "pos_models.csv"), client_model.POSModel, "model_id", None),
 
-    {"full_name": "Daniel Carter", "department": "Warehouse", "job_title": "Warehouse Agent"},
-    {"full_name": "Sophia Lewis", "department": "Warehouse", "job_title": "Warehouse Agent"},
-    {"full_name": "James Turner", "department": "Warehouse", "job_title": "Warehouse Agent"},
-    {"full_name": "Olivia Martin", "department": "Warehouse", "job_title": "Warehouse Agent"},
-    {"full_name": "Liam Adams", "department": "Warehouse", "job_title": "Warehouse Agent"},
-
-    {"full_name": "Ethan Reynolds", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Olivia Carter", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Liam Mitchell", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Sophia Bennett", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Noah Harrison", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Ava Collins", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Mason Brooks", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Isabella Cooper", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Elijah Scott", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Charlotte Hayes", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "James Foster", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Amelia Richardson", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Benjamin Simmons", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Harper Edwards", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Alexander Jenkins", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Emily Griffin", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Daniel Walker", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Abigail Wright", "department": "Absa", "job_title": "Configuration Agent"},
-    {"full_name": "Henry Murphy", "department": "Absa", "job_title": "Configuration Agent"},
-
-    {"full_name": "William Carter", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Emma Johnson", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Michael Brown", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Sophia Williams", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Daniel Smith", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Olivia Davis", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Matthew Wilson", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Isabella Anderson", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Ethan Thomas", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Charlotte Martinez", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "James Taylor", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Amelia Hernandez", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Benjamin Moore", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Harper Jackson", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Alexander White", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Emily Harris", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Daniel Martin", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Abigail Thompson", "department": "FNB", "job_title": "Configuration Agent"},
-    {"full_name": "Henry Garcia", "department": "FNB", "job_title": "Configuration Agent"},
-
-    {"full_name": "Ethan Walker", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Olivia Carter", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Liam Mitchell", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Sophia Bennett", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Noah Harrison", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Ava Collins", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Mason Brooks", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Isabella Cooper", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Elijah Scott", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Charlotte Hayes", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "James Foster", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Amelia Richardson", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Benjamin Simmons", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Harper Edwards", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Alexander Jenkins", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Emily Griffin", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Daniel Walker", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Abigail Wright", "department": "Standard Bank", "job_title": "Configuration Agent"},
-    {"full_name": "Henry Murphy", "department": "Standard Bank", "job_title": "Configuration Agent"}
+    (os.path.join(BASE_DIR, "data", "iwl250 parts.csv"), client_model.IWL250Part, "part_id", None),
+    (os.path.join(BASE_DIR, "data", "link2000 parts.csv"), client_model.Link2000Part, "part_id", None),
+    (os.path.join(BASE_DIR, "data", "move2500 parts.csv"), client_model.Move2500Part, "part_id", None),
+    (os.path.join(BASE_DIR, "data", "move3000 parts.csv"), client_model.Move3000Part, "part_id", None),
+    (os.path.join(BASE_DIR, "data", "n910pro parts.csv"), client_model.N910ProPart, "part_id", None),
+    (os.path.join(BASE_DIR, "data", "n910std parts.csv"), client_model.N910stdPart, "part_id", None),
 ]
 
-def insert_multiple_employees(db: Session, employees_data: list):
-    # Create a list of Company_Employee_Info objects from the provided data
-    employees = [
-        CompanyEmployeeInfo(
-            full_name=emp["full_name"],
-            department=emp["department"],
-            job_title=emp["job_title"]
-        )
-        for emp in employees_data
-    ]
+# Cache to store existing IDs per table to avoid repeated DB queries
+existing_ids_cache = {}
 
-    # Bulk insert the list of employees into the database
-    db.bulk_save_objects(employees)
-    db.commit()
-    return employees
+# Cache to store existing employee names (special case)
+existing_employee_names = set()
+
+def load_existing_ids(db, model, id_field):
+    """Load existing unique IDs from the DB for a given model to prevent duplicates."""
+    try:
+        # Query returns list of tuples like [(id1,), (id2,), ...]
+        existing_ids = db.query(getattr(model, id_field)).all()
+        # Extract first element from each tuple to get IDs as a set
+        return {record[0] for record in existing_ids}
+    except Exception as e:
+        logging.error(f"❌ Error loading existing IDs for {model.__tablename__}: {e}")
+        return set()
+
+def load_existing_employee_names(db):
+    """Load all existing employee names from the employees table."""
+    try:
+        names = db.query(employees_model.CompanyEmployeeInfo.emp_name).all()
+        return {record[0] for record in names}
+    except Exception as e:
+        logging.error(f"❌ Error loading employee names: {e}")
+        return set()
+
+def insert_csv_data(csv_file, model, id_field, unique_field=None):
+    """
+    Read CSV, filter out existing records, and bulk insert new unique records.
+    unique_field is used for special duplicate checks (like employee names).
+    """
+    if not os.path.exists(csv_file):
+        logging.warning(f"⚠️ File not found: {csv_file}")
+        return
+
+    try:
+        # Load CSV data as strings to avoid datatype issues
+        df = pd.read_csv(csv_file, dtype=str)
+        # Normalize columns: lowercase & strip spaces
+        df.columns = [col.lower().strip() for col in df.columns]
+        # Trim string fields to max 255 chars (safe for DB varchar limits)
+        df = df.applymap(lambda x: x.strip()[:255] if isinstance(x, str) else x)
+        df.fillna(value=pd.NA, inplace=True)  # Convert NaNs to pandas NA
+
+        with SessionLocal() as db:
+            # Load existing IDs for this table only once, cache for reuse
+            if model.__tablename__ not in existing_ids_cache:
+                existing_ids_cache[model.__tablename__] = load_existing_ids(db, model, id_field)
+
+            # Special handling for employees.csv to avoid duplicate emp_name and emp_id
+            if csv_file.endswith("employees.csv"):
+                global existing_employee_names
+                if not existing_employee_names:
+                    existing_employee_names = load_existing_employee_names(db)
+
+                # Filter new records where emp_name AND emp_id don't exist
+                new_records = [
+                    record for record in df.to_dict(orient="records")
+                    if record.get("emp_name") not in existing_employee_names
+                    and record.get(id_field) not in existing_ids_cache[model.__tablename__]
+                ]
+                # Update employee names cache with newly added records
+                existing_employee_names.update({record.get("emp_name") for record in new_records})
+            else:
+                # For other CSVs, just check ID uniqueness
+                new_records = [
+                    record for record in df.to_dict(orient="records")
+                    if record.get(id_field) not in existing_ids_cache[model.__tablename__]
+                ]
+
+            if new_records:
+                # Bulk save ORM model instances created from the records
+                db.bulk_save_objects([model(**record) for record in new_records])
+                db.commit()
+                logging.info(f"✅ Inserted {len(new_records)} records into {model.__tablename__}")
+                # Update cache with newly inserted IDs
+                existing_ids_cache[model.__tablename__].update(
+                    {record.get(id_field) for record in new_records}
+                )
+            else:
+                logging.info(f"No new records to insert into {model.__tablename__}")
+
+    except IntegrityError as e:
+        logging.warning(f" IntegrityError while inserting into {model.__tablename__}. Possibly duplicate ID(s). Details: {e}")
+    except DataError:
+        logging.error(f" Data error in {csv_file}, possibly due to incorrect field formats.")
+    except Exception as e:
+        logging.error(f" Unexpected error inserting into {model.__tablename__}: {e}")
+
+# Loop through all CSV files and models to insert data
+for csv_file, model, id_field, unique_field in csv_model_pairs:
+    insert_csv_data(csv_file, model, id_field, unique_field)
+
+logging.info("🎯 Data processing completed successfully!")
+
+
+# ----------------------------------------------------------------------
+# Specific function to insert POSDevice records efficiently in bulk,
+# with checks for duplicates and foreign key existence.
+
+# CSV file path for POS devices
+csv_file_path = os.path.join(BASE_DIR, "data", "pos_devices.csv")
+
+# Create a session factory bound to the engine
+SessionFactory = sessionmaker(bind=engine)
+
+def insert_pos_devices(csv_file):
+    """Bulk insert POS devices from CSV, avoid duplicates by serial_number."""
+    session = SessionFactory()
+
+    try:
+        df = pd.read_csv(csv_file)
+        # Drop rows with missing critical foreign key data
+        df = df.dropna(subset=["model_name", "client_name"])
+
+        new_devices = []
+        batch_size = 5000  # Tune batch size as needed
+
+        for _, row in df.iterrows():
+            # Check if a device with the serial number already exists (efficient scalar exists query)
+            exists_check = session.query(
+                session.query(POSDevice).filter_by(serial_number=row["serial_number"]).exists()
+            ).scalar()
+            if exists_check:
+                continue  # Skip duplicates
+
+            # Fetch related model and client records for foreign keys
+            model = session.query(POSModel).filter_by(model_name=row["model_name"]).first()
+            client = session.query(Client).filter_by(client_name=row["client_name"]).first()
+
+            # Skip row if foreign keys are invalid/missing
+            if not model or not client:
+                continue
+
+            # Create POSDevice instance with required fields and foreign keys
+            new_device = POSDevice(
+                serial_number=row["serial_number"],
+                serial_prefix=row.get("serial_prefix"),  # Use get() in case missing
+                model_name=row["model_name"],
+                client_name=row["client_name"],
+                model_id=model.model_id,
+                client_id=client.client_id
+            )
+            new_devices.append(new_device)
+
+            # Commit batch if batch size reached to manage memory & speed
+            if len(new_devices) >= batch_size:
+                session.bulk_save_objects(new_devices)
+                session.commit()
+                new_devices.clear()  # Free memory
+
+        # Insert any remaining devices after loop
+        if new_devices:
+            session.bulk_save_objects(new_devices)
+            session.commit()
+
+        logging.info("✅ POS devices data inserted successfully!")
+
+    except IntegrityError as e:
+        session.rollback()
+        logging.error(f"❌ Integrity error inserting POS devices: {e}")
+
+    except Exception as e:
+        logging.error(f"❌ Unexpected error inserting POS devices: {e}")
+
+    finally:
+        session.close()
+
+# Run POS devices insertion
+insert_pos_devices(csv_file_path)
+
+
+
+rename_map = {
+    "fnb": "BankOne",
+    "sbsa": "Unity Bank",
+    "nedbank": "Heritage Bank",
+    "absa": "Evergreen Bank"
+}
 
 

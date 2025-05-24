@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Background and centering container -->
+<div class="auth-page-bg d-flex justify-content-center align-items-center min-vh-100">
+    <div class="container" style="max-width: 500px; width: 100%;">
+        <!-- Page title -->
+        <h3 class="text-center mb-4">{{ page_title }}</h3>
+
+        <div class="text-center mb-4">
+            <!-- Uncomment below to add an image -->
+            <!-- <img src="{{ url_for('static', filename='images/pos.jpg') }}" alt="POS Terminal"
+                 class="img-fluid" style="max-width: 200px;"> -->
+        </div>
+
+        <!-- Password requirements shown only on Sign Up page -->
+        {% if page_title == 'Sign Up' %}
+        <p class="text-center">
+            Your password must be at least 8 characters long and include an uppercase letter,
+            a lowercase letter, a number, and a special character (e.g. ! @ # $ %).
+        </p>
+        {% endif %}
+
+        <!-- Flash messages with Bootstrap alert styles -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <!-- Close button for alert -->
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Form starts -->
+        <form method="POST">
+            {{ form.hidden_tag() }} <!-- CSRF token -->
+            <div class="mb-3">
+                {{ form.username.label }}  <!-- Username label -->
+                {{ form.username(class="form-control") }}  <!-- Username input -->
+            </div>
+            <div class="mb-3">
+                {{ form.password.label }}  <!-- Password label -->
+                {{ form.password(class="form-control") }}  <!-- Password input -->
+            </div>
+            <!-- Submit button with dynamic text -->
+            <button type="submit" class="btn btn-primary w-100">{{ button_text }}</button>
+        </form>
+
+        <!-- Link to switch between Login and Sign Up pages -->
+        <div class="text-center mt-2">
+            {% if page_title == "Login" %}
+                <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
+            {% else %}
+                <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

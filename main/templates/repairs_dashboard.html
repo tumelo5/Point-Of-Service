@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    /* Style inputs and selects with smooth width transition */
+    input.form-control,
+    select.form-select {
+        transition: all 0.3s ease;
+        min-width: 150px;
+    }
+
+    /* Expand width on hover/focus for better usability */
+    input.form-control:hover,
+    input.form-control:focus,
+    select.form-select:hover,
+    select.form-select:focus {
+        min-width: 250px;
+    }
+
+    /* Style for delete row button */
+    .delete-row-btn {
+        color: red;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        background: none;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2>Log Technician Work</h2>
+    <form method="POST" id="logForm">
+        <div class="table-responsive">
+            <table class="table table-bordered text-center" id="logTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>em_id</th>
+                        <th>Serial Number</th>
+                        <th>Device</th>
+                        <th>Client</th>
+                        <th>Batch Number</th>
+                        <th>SLA Deadline</th>
+                        {% for i in range(1, 5) %}
+                        <th>Fault {{ i }}</th>
+                        <th>Part {{ i }}</th>
+                        {% endfor %}
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+            <!-- Button to add a new row -->
+            <button type="button" class="btn btn-outline-primary" onclick="addRow()">Add Row</button>
+            <!-- Submit form -->
+            <button type="submit" class="btn btn-success">Submit</button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Reference to the tbody where rows will be added
+const logTableBody = document.querySelector("#logTable tbody");
+
+// Create a new table row with optional pre-filled data
+function createRow(data = {}) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+        <td><input type="text" name="emp_id[]" class="form-control emp-id" value="${data.emp_id || ''}"></td>
+        <td><input type="text" name="serial_number[]" class="form-control serial-number-input" value="${data.serial_number || ''}"></td>
+        <td><input type="text" name="device[]" class="form-control device-name" value="${data.device || ''}"></td>
+        <td><input type="text" name="client[]" class="form-control client-name" value="${data.client || ''}"></td>
+        <td><input type="text" name="batch_number[]" class="form-control" value="${data.batch_number || ''}"></td>
+        <td><input type="datetime-local" name="sla_deadline[]" class="form-control" value="${data.sla_deadline || ''}"></td>
+
+        ${[1, 2, 3, 4].map(i => `
+            <td>
+                <select name="fault_${i}[]" class="form-select fault-dropdown">
+                    <option value="" disabled ${!data[`fault_${i}`] ? "selected" : ""}>Select Fault</option>
+                    {% for fault in faults %}
+                    <option value="{{ fault.fault_name }}" ${data[`fault_${i}`] === "{{ fault.fault_name }}" ? "selected" : ""}>
+                        {{ fault.fault_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="text" name="part_${i}[]" class="form-control part-display" value="${data[`part_${i}`] || ''}" readonly></td>
+        `).join('')}
+
+        <td>
+            <select name="status[]" class="form-select">
+                <option disabled ${!data.status ? "selected" : ""}>Choose...</option>
+                <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="in_progress" ${data.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                <option value="completed" ${data.status === 'completed' ? 'selected' : ''}>Completed</option>
+            </select>
+        </td>
+        <td>
+            <button type="button" class="delete-row-btn" onclick="deleteRow(this)">🗑</button>
+        </td>
+    `;
+    return row;
+}
+
+// Add a new row to the table, optionally with data
+function addRow(data = {}) {
+    const newRow = createRow(data);
+    logTableBody.appendChild(newRow);
+    saveFormState();
+}
+
+// Delete the row where the clicked delete button is located
+function deleteRow(button) {
+    const row = button.closest("tr");
+    row.remove();
+    saveFormState();
+}
+
+// Load saved form data from localStorage and populate the table
+function loadFormState() {
+    const saved = localStorage.getItem("logFormData");
+    if (!saved) {
+        addRow();  // If no saved data, add a default empty row
+        return;
+    }
+    const rows = JSON.parse(saved);
+    rows.forEach(rowData => addRow(rowData));
+}
+
+// Save current form data to localStorage
+function saveFormState() {
+    const rows = [];
+    logTableBody.querySelectorAll("tr").forEach(row => {
+        const rowData = {};
+        row.querySelectorAll("input, select").forEach(input => {
+            // Strip the [] from input name so keys are consistent (emp_id[], etc.)
+            const key = input.name.replace(/\[\]$/, '');
+            rowData[key] = input.value;
+        });
+        rows.push(rowData);
+    });
+    localStorage.setItem("logFormData", JSON.stringify(rows));
+
+    console.log("Saved form data:", rows);
+}
+
+// Clear saved form data on submit to avoid restoring stale data
+document.getElementById("logForm").addEventListener("submit", function() {
+    localStorage.removeItem("logFormData");
+});
+
+// Listen for changes on the page to update saved data and handle dynamic input changes
+document.addEventListener("change", function(e) {
+    const target = e.target;
+    if (target.closest("tr")) saveFormState(); // Save form state on any input/select change inside a row
+
+    // When a fault dropdown changes, update corresponding part input with data attribute
+    if (target.classList.contains("fault-dropdown")) {
+        const cell = target.closest("td");
+        const partInput = cell.nextElementSibling.querySelector(".part-display");
+        const selectedOption = target.selectedOptions[0];
+        const partNumber = selectedOption.dataset.partNumber || "";
+        partInput.value = partNumber;
+        saveFormState(); // Save after updating part number
+
+    }
+
+    // When serial number changes, fetch related info to populate device and client fields, and fault options
+    if (target.classList.contains("serial-number-input")) {
+        const row = target.closest("tr");
+        const serial = target.value;
+
+        // Fetch device and client info based on serial number
+        fetch(`/get-info-by-serial/${serial}`)
+            .then(res => res.json())
+            .then(data => {
+                row.querySelector(".device-name").value = data.device || "";
+                row.querySelector(".client-name").value = data.client || "";
+                saveFormState();
+            });
+
+        // Fetch faults and parts related to this serial number
+        fetch("/get_faults_by_serial_number", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ serial_number: serial })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const faultDropdowns = row.querySelectorAll(".fault-dropdown");
+            const partDisplays = row.querySelectorAll(".part-display");
+
+            if (data.error) {
+                // If no faults found, disable fault dropdowns
+                faultDropdowns.forEach(select => {
+                    select.innerHTML = `<option disabled selected>No faults found</option>`;
+                });
+                partDisplays.forEach(input => input.value = "");
+                saveFormState();
+                return;
+            }
+
+            // Populate fault dropdowns with fetched faults and assign part numbers as data attributes
+            faultDropdowns.forEach((select, index) => {
+                const currentValue = select.value; // preserve selected fault
+                select.innerHTML = `<option value="" disabled selected>Select Fault</option>`;
+                data.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item.fault;
+                    option.textContent = item.fault;
+                    option.dataset.partNumber = item.part_number;
+                    if (item.fault === currentValue) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                if (!currentValue || !data.some(item => item.fault === currentValue)) {
+                    partDisplays[index].value = "";
+                }
+            });
+            saveFormState();
+        });
+    }
+});
+
+// Clear saved form data on submit to avoid restoring stale data
+document.getElementById("logForm").addEventListener("submit", function() {
+    localStorage.removeItem("logFormData");
+ });
+
+// On page load, restore any saved form data
+window.addEventListener("load", loadFormState);
+</script>
+
+{% endblock %}

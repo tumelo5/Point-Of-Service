@@ -1,0 +1,13 @@
+part_name,part_number,faults
+keypad,IWL-KPD-001,keybad marked/worn out
+window plate,IWL-WPL-002,window plated scratched/borken/markings faded
+print lid,IWL-PRL-003,printer lid borken/missing
+upper casing,IWL-UCA-004,upper casing broken/scratched/color faded
+lower casing,IWL-LCA-005,lower casing broken/scratched/color faded
+battery door,IWL-BTD-006,battery door broken/scratched/color faded
+battery,IWL-BAT-007,battery broken/unable to hold power
+communcation board,IWL-CMB-008,communication board faulty
+cmos,IWL-CMO-009,cmos volatge low
+lcd,IWL-LCD-010,LCD broken/flickering/dead
+keypad wiremesh,IWL-KWM-011,keypad wiremesh mulfunctions
+printer,IWL-PRN-012,printer broken/prints blank

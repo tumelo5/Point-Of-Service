@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Log Technician Work</h2>
+
+    <!-- Form to submit technician work log, POST method to 'dashboard' route -->
+    <form method="POST" action="{{ url_for('dashboard') }}">
+        {{ form.csrf_token }} <!-- CSRF token for form security -->
+
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>em_id</th>
+                    <th>Serial Number</th>
+                    <th>Batch Number</th>
+                    <th>SLA Deadline</th>
+                    <th>Device</th>
+                    <th>Client</th>
+                    <th>Fault</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <!-- Serial Number input with required validation -->
+                    <td><input type="text" name="serial_number" id="serial_number" class="form-control" required></td>
+                    <!-- Batch Number input -->
+                    <td><input type="text" name="batch_number" class="form-control" required></td>
+                    <!-- SLA Deadline input as datetime-local -->
+                    <td><input type="datetime-local" name="sla_deadline" class="form-control" required></td>
+                    <!-- Device name field, readonly - populated dynamically -->
+                    <td><input type="text" id="device_name" name="device_name" class="form-control" readonly></td>
+                    <!-- Client name field, readonly - populated dynamically -->
+                    <td><input type="text" id="client_name" name="client_name" class="form-control" readonly></td>
+
+                    <!-- Device dropdown select populated from 'devices' list -->
+                    <td>
+                        <select name="device_id" class="form-select" required>
+                            {% for device in devices %}
+                                <option value="{{ device.device_id }}">{{ device.model_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <!-- Client dropdown select populated from 'clients' list -->
+                    <td>
+                        <select name="client_id" class="form-select" required>
+                            {% for client in clients %}
+                                <option value="{{ client.client_id }}">{{ client.client_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <!-- Fault dropdown select populated from 'faults' list -->
+                    <td>
+                        <select name="fault_id" class="form-select" required>
+                            {% for fault in faults %}
+                                <option value="{{ fault.fault_id }}">{{ fault.fault_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <!-- Status dropdown select populated from 'statuses' list -->
+                    <td>
+                        <select name="status_id" class="form-select" required>
+                            {% for status in statuses %}
+                                <option value="{{ status.status_id }}">{{ status.status_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+
+                    <!-- Submit button to log technician work -->
+                    <td>
+                        <button type="submit" class="btn btn-primary">Log</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+{% endblock %}

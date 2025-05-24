@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+        {% block title %} Flask App {% endblock %} <!-- Title block for child templates -->
+    </title>
+    <!-- Bootstrap CSS CDN for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Main container with margin top -->
+    <div class="container mt-4">
+        {% block content %}
+        <!-- Content block for child templates -->
+        {% endblock %}
+    </div>
+
+    <script>
+    // Wait for the DOM to be fully loaded
+    document.addEventListener("DOMContentLoaded", function () {
+        // Listen for changes in the serial number input field
+        document.getElementById('serial_number').addEventListener('change', function () {
+            const serial = this.value; // Get input value
+
+            // Fetch device and client info from server endpoint using serial number
+            fetch(`/get-info-by-serial/${serial}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Update device_name and client_name fields with fetched data or show 'Not found'
+                    document.getElementById('device_name').value = data.device || 'Not found';
+                    document.getElementById('client_name').value = data.client || 'Not found';
+                })
+                .catch(error => {
+                    // Handle errors and display 'Error' in fields
+                    console.error('Error:', error);
+                    document.getElementById('device_name').value = 'Error';
+                    document.getElementById('client_name').value = 'Error';
+                });
+        });
+    });
+    </script>
+
+</body>
+</html>

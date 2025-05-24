@@ -1,0 +1,10 @@
+part_name,part_number,faults
+upper casing,NP47-UCA-001,upper casing cracked/damaged
+lower casing,NP47-LCA-002,lower casing cracked/damaged
+printer lid,NP47-PRL-003,printer lid cracked/damaged
+battery door,NP47-BTD-004,battery door cracked/damaged
+battery,NP47-BAT-005,battery fails to charge/damaged cables/connector
+printer,NP47-PRN-006,printer not printing
+cmos,NP47-CMO-007,cmos has low volatge
+usb port(c-type),NP47-USB-008,usb port(c-type) not charging/not transmitting data
+ic slot,NP47-ICS-010,ic slot damaged

@@ -1,45 +1,28 @@
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker,Session
+from sqlalchemy.orm import sessionmaker, Session
+from my_project.config import username, password, host, dbname
 
-# DB credentials
-username = 'root'
-password = '80eKae!?'
-host = 'localhost'
-dbname = 'device_tracker'
-
-# Create the database connection
+# Construct the database URL for MySQL using the config credentials
 DATABASE_URL = f"mysql+mysqlconnector://{username}:{password}@{host}/{dbname}"
 
-# Create an engine to connect to MySQL
-engine = create_engine(DATABASE_URL, pool_size=10, max_overflow=20)
+# Create SQLAlchemy engine with connection pooling
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,        # Number of connections to keep in the pool
+    max_overflow=20      # Additional connections allowed beyond pool_size
+)
 
-# Create a session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Session factory to create DB sessions (manual commit/flush handling)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
 
+# Test connection by executing a simple SELECT statement
 try:
-    with Session(engine) as session:
-        result = session.execute(text("SELECT 1"))
-        print("Connected Successfully:", result.scalar())
+    with SessionLocal() as session:
+        result = session.execute(text("SELECT 1"))  # Simple query to test DB connection
+        print("Connected Successfully:", result.scalar())  # Should print 1
 except Exception as e:
-    print("Connection Failed:", e)
-
-# # Function to get a session
-# def get_db():
-#     db = SessionLocal()  # Open a session
-#     try:
-#         yield db  # Provide session
-#     finally:
-#         db.close()  # Close session after use
-
-# def fetch_and_insert():
-#     with SessionLocal() as db:  # Open session
-#         # ✅ Fetching data
-#         result = db.execute("SELECT * FROM your_table")
-#         for row in result:
-#             print(row)
-#
-#         # ✅ Inserting new data
-#         db.execute("INSERT INTO your_table (column1) VALUES ('NewValue')")
-#         db.commit()  # Commit the transaction
-#
-# fetch_and_insert()  # Runs everything
+    print("Connection Failed:", e)  # Handle and display connection errors

@@ -1,0 +1,10 @@
+part_name,part_number,faults
+keypad,2000-KPD-001,keypad drwan on/worn
+window plate,2000-WPL-002,window plated scratched/borken/faded
+upper casing,2000-UCA-003,upper casing scratched/borken/faded
+lower casing,2000-LCA-004,lower casingd scratched/broken/faded
+battery door,2000-BTD-005,battery door scratched/broken/faded
+battery ,2000-BAT-006,battery door scratched/unable to hold power
+usb(c-type),2000-USC-007,usb(c-type) broken/missing
+keypad board,2000-KPB-008,keypad board mulfunctions
+lcd,2000-LCD-009,LCD broke/flickering/dead

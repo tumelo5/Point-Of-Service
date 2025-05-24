@@ -1,0 +1,11 @@
+part_name,part_number,faults
+upper casing,NS45-UCA-001,upper casing cracked/damaged
+lower casing,NS45-LCA-002,lower casing cracked/damaged
+printer lid,NS45-PRL-003,printer lid cracked/damaged
+battery door,NS45-BTD-004,battery door cracked/damaged
+battery,NS45-BAT-005,battery fails to charge/damaged cables/connector
+printer,NS45-PRN-006,printer not printing
+cmos,NS45-CMO-007,cmos haslow volatge
+usb port(b-type),NS45-USB-008,usb port(c-type) not charging/not transmitting data
+pin charger,NS45-PCH-009,pin charge danaged/broken
+ic slot,NS45-ICS-01,ic slot damaged
